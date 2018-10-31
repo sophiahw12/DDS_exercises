@@ -1,2 +1,2 @@
 # DDS_exercises
-"Doing Data Science" exercises
+Doing Data Science exercises
