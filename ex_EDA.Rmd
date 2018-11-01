@@ -13,16 +13,13 @@ knitr::opts_chunk$set(echo = TRUE)
 # load data and packages
 library(dplyr)
 library(ggplot2)
-
 data1 <- read.csv(url("https://stat.columbia.edu/~rachel/datasets/nyt1.csv"))
 head(data1)
 ```
 
 ```{r}
-
 # exercise 1
 # create a new variable age_group
-
 data1$age_group <- case_when(
   data1$Age <= 18 ~ "<18",
   data1$Age == 18 | data1$Age <= 24 ~ "18-24",
@@ -32,29 +29,19 @@ data1$age_group <- case_when(
   data1$Age == 55 | data1$Age<= 64 ~ "55-64",
   data1$Age >= 65 ~ "65+")
 head(data1)
-
 # exercise 2
 # plot distributions of no. impressions and click-through-rate for these 6 age categories
-
 # click-through-rate, CTR = no. clicks/no. impressions
 data1$click_rate <- data1$Clicks/data1$Impressions
-
 ##TODO make a subset exlcuding any cases where impressions are 0 
-
-
-
-
 # plot CTR
 ggplot(data1, aes(x = click_rate, fill = age_group))+
   geom_density()
-
 # plot for impressions
 ggplot(data1, aes(x = Impressions, fill = age_group)) +
   geom_histogram(binwidth =1)
-
 # plot for impressions
 ggplot(data1, aes(x = age_group, y = Impressions, fill = age_group)) +
   geom_boxplot()
 # define new variable 
-
 ```
