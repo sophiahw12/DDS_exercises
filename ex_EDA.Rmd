@@ -131,7 +131,8 @@ print(ctr_plot)
 ##TODO Compare two groups' CTRs
 t_test <- t.test(click_rate~Gender, data = data1_filt)
 tidy_ttest <- broom::tidy(t_test)
-print(tidy_ttest$p.value)
+p_val <- tidy_ttest$p.value
+print(p_val)
  
 ##TODO Describe & interpret any patterns you find
 
