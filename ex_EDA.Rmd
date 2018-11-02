@@ -56,8 +56,7 @@ Exercise 2
 # click-through-rate (CTR) = no. clicks/no. impressions
 data1$click_rate <- data1$Clicks/data1$Impressions
 
-## Filter dataset - exclude cases where there are no impressions nor clicks
-# only use data from users that are signed in
+# Exclude cases where there are no impressions nor clicks and only use data from users that are signed in
 data1_filt <- data1 %>%
   filter(Clicks > 0,
          Impressions > 0,
