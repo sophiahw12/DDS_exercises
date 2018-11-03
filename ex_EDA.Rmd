@@ -1,5 +1,5 @@
 ---
-title: "ex_EDA"
+title: "New York Times User Data from 2012"
 author: "Sophia"
 date: "31/10/2018"
 output: html_document
