@@ -1,5 +1,5 @@
 ---
-title: "New York Times Dataset from 2012 - Homework 1"
+title: "ex_EDA"
 author: "Sophia"
 date: "31/10/2018"
 output: html_document
@@ -14,20 +14,20 @@ knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(ggplot2)
 library(doBy)
-library(tidyverse)
-# viridis colour palette
+# colour palette
 library(viridis)
 
 data1 <- read.csv(url("https://stat.columbia.edu/~rachel/datasets/nyt1.csv"))
 head(data1)
 ```
-Exercise 1
+
+# Exercise 1
 
 ```{r}
 # Gender is coded as 0 = female, 1 = male
 data1$Gender <- ifelse(data1$Gender == 0, "female", "male")
 
-# New variable age_group for age categories
+# create a new variable age_group
 data1$age_group <- case_when(
   data1$Age <= 18 ~ "<18",
   data1$Age == 18 | data1$Age <= 24 ~ "18-24",
@@ -40,58 +40,55 @@ head(data1)
 
 # check for missing values
 sum(is.na(data1))
-
+```
+# Exercise 2
+```{r}
+# look at the descriptives
 descriptives <- function(x){c(length(x), min(x),max(x), mean(x), median(x))}
 group_stats <- summaryBy(Age~age_group, data =data1, FUN=descriptives)
 
-# rename columns 
+# rename columns
 colnames(group_stats) <- c("Age_group", "Length", "Min_value", "Max_value","Mean","Median")
-
 print(group_stats)
 
-```
-Exercise 2
-```{r}
-# plot distributions of no. impressions and click-through-rate for these 6 age groups
-# click-through-rate (CTR) = no. clicks/no. impressions
-data1$click_rate <- data1$Clicks/data1$Impressions
+# plot distributions of no. impressions and click-through-rate for these 6 age categories. click-through-rate, CTR = no. clicks/no. impressions
+data1$click_rate <- (data1$Clicks/data1$Impressions)*100
 
-# Exclude cases where there are no impressions nor clicks and only use data from users that are signed in
-data1_filt <- data1 %>%
-  filter(Clicks > 0,
+## Filter dataset - exclude cases where there are no impressions nor clicks. only use data from users that are signed in
+data1_filt <- data1 %>% filter(
+         Clicks > 0,
          Impressions > 0,
          Signed_In == 1)
 
-
-```
-
-```{r}
 # plot CTR
 ctr_plot <- ggplot(data1_filt, aes(x = click_rate, fill = age_group))+
-  geom_histogram(binwidth =0.1,position = "dodge")+
+  geom_histogram(binwidth =20,position = "dodge")+
   ggtitle("Distribution of Click-Through Rates") +
-  xlab("Click-Through Rate") +
-  theme_bw() +
+  xlab("Click-Through Rate (%)") +
+  xlim(0, max(data1_filt$click_rate))+
+  #theme_bw() +
   theme(plot.title = element_text(hjust = 0.5))+
   scale_fill_viridis(discrete = TRUE)
 print(ctr_plot)
 
 # plot for impressions
 im_plot <- ggplot(data1_filt, aes(x = Impressions, fill = age_group)) +
-  geom_histogram(binwidth =1, position = "dodge", alpha = 0.8)+
+  geom_histogram(binwidth =0.1, position = "dodge", alpha = 0.8)+
   ggtitle("Distribution of Impressions") +
   theme_bw() +
   theme(plot.title = element_text(hjust = 0.5))
 print(im_plot)
 
-# define new variable to segment or categorize users based on their click behaviour
-# low vs. high CTR
-ctr_med <- median(data1_filt$click_rate)
-data1_filt$ctr_cat <- ifelse(data1_filt$click_rate <= ctr_med, "low", 
-                             "high") 
-  
-# Explore the data and make visual and quantitative comparisons across user segments/demographics (<18-year-old males versus < 18-year-old females or logged-in versus not, for example).
 
+# define new variable to segment or categorize users based on their click behaviour, low vs. high CTR
+ctr_med <- median(data1_filt$click_rate)
+
+data1_filt$ctr_cat <- ifelse(data1_filt$click_rate <= ctr_med, "low", "high")
+
+```
+Explore the data and make visual and quantitative comparisons across user segments/demographics (<18-year-old males versus < 18-year-old females or logged-in versus not, for example).
+
+```{r}
 u18_males <- data1_filt %>%
   filter(Gender == "male", Age < 18 )
 
@@ -107,34 +104,39 @@ n_u18_females <- nrow(u18_females)
 # group descriptives
 male_table <- u18_males %>%
   group_by(Age) %>%
-  summarise(n_males = n(), mean_CTR = mean(click_rate), med_CTR = median(click_rate))
+  summarise(n_males = n(),
+            mean_CTR = mean(click_rate),
+            med_CTR = median(click_rate))
 
 female_table <- u18_females %>%
   group_by(Age) %>%
-  summarise(n_females = n(), mean_CTR = mean(click_rate), med_CTR = median(click_rate))
-
+  summarise(n_females = n(),
+            mean_CTR = mean(click_rate),
+            med_CTR = median(click_rate))
 # mean CTRs
 mean_ctr_mal <- mean(u18_males$click_rate)
 mean_ctr_fem <- mean(u18_females$click_rate)
+sd_ctr_mal <- sd(u18_males$click_rate)
+sd_ctr_fem <- sd(u18_females$click_rate)
 
 # can see a gamma distribution of CTR in both groups
 ctr_plot <- ggplot(u18, aes(x = u18$click_rate, fill = Gender)) +
   geom_density(binwidth =1, alpha = 0.5, position = "dodge")+
-  ggtitle("Distribution of CTR in Males & Females Under 18") + 
-  xlab("Click-Through Rate") + 
+  ggtitle("Distribution of CTR in Males & Females Under 18") +
+  xlab("Click-Through Rate") +
   theme_bw() +
   theme(plot.title = element_text(hjust = 0.5))
 print(ctr_plot)
 
 
-##TODO Compare two groups' CTRs
+#Compare two groups' CTRs
+t.test(click_rate~Gender, data = data1_filt)
 t_test <- t.test(click_rate~Gender, data = data1_filt)
 tidy_ttest <- broom::tidy(t_test)
-p_val <- tidy_ttest$p.value
-print(p_val)
- 
-##TODO Describe & interpret any patterns you find
+tidy_ttest
+print(tidy_ttest$p.value)
+
+
 
 ```
-
-
+We can see that there is no significant difference between males and females in terms of click-through rates (p-value = 0.5919).
