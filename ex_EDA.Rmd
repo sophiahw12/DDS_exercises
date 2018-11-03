@@ -119,7 +119,7 @@ mean_ctr_fem <- mean(u18_females$click_rate)
 sd_ctr_mal <- sd(u18_males$click_rate)
 sd_ctr_fem <- sd(u18_females$click_rate)
 
-# can see a gamma distribution of CTR in both groups
+# Distribution of CTR in both groups under 18 years
 ctr_plot <- ggplot(u18, aes(x = u18$click_rate, fill = Gender)) +
   geom_density(binwidth =1, alpha = 0.5, position = "dodge")+
   ggtitle("Distribution of CTR in Males & Females Under 18") +
