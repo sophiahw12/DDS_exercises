@@ -2,7 +2,9 @@
 title: "New York Times User Data from 2012"
 author: "Sophia"
 date: "31/10/2018"
-output: html_document
+output: github_document 
+
+
 ---
 
 ```{r setup, include=FALSE}
@@ -73,7 +75,7 @@ print(ctr_plot)
 
 # plot for impressions
 im_plot <- ggplot(data1_filt, aes(x = Impressions, fill = age_group)) +
-  geom_histogram(binwidth =0.1, position = "dodge", alpha = 0.8)+
+  geom_histogram(binwidth =20, position = "dodge", alpha = 0.8)+
   ggtitle("Distribution of Impressions") +
   theme_bw() +
   theme(plot.title = element_text(hjust = 0.5))
