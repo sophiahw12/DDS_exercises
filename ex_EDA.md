@@ -27,18 +27,18 @@ Exercise 1
 Exercise 2
 ==========
 
-    ##   Age_group Length Min_value Max_value      Mean Median
-    ## 1       <18 156358         0        18  1.974168      0
-    ## 2     18-24  35270        19        24 21.269039     21
-    ## 3     25-34  62106        25        35 29.851351     30
-    ## 4     35-44  66928        36        44 39.758741     40
-    ## 5     45-54  64288        45        54 49.492580     49
-    ## 6     55-64  44738        55        64 59.498189     60
-    ## 7       65+  28753        65       108 72.988697     72
+    ##   Age_group Length Min_value Max_value     Mean Median
+    ## 1       <18 150934         0        17  1.39826      0
+    ## 2     18-24  40694        18        24 20.83332     21
+    ## 3     25-34  62106        25        35 29.85135     30
+    ## 4     35-44  66928        36        44 39.75874     40
+    ## 5     45-54  64288        45        54 49.49258     49
+    ## 6     55-64  44738        55        64 59.49819     60
+    ## 7       65+  28753        65       108 72.98870     72
 
     ## Warning: package 'bindrcpp' was built under R version 3.4.4
 
-    ## Warning: Removed 8 rows containing missing values (geom_bar).
+    ## Warning: Removed 14 rows containing missing values (geom_bar).
 
 ![](ex_EDA_files/figure-markdown_github/unnamed-chunk-3-1.png)![](ex_EDA_files/figure-markdown_github/unnamed-chunk-3-2.png) Explore the data and make visual and quantitative comparisons across user segments/demographics (&lt;18-year-old males versus &lt; 18-year-old females or logged-in versus not, for example).
 

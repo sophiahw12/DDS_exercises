@@ -31,12 +31,12 @@ data1$Gender <- ifelse(data1$Gender == 0, "female", "male")
 
 # create a new variable age_group
 data1$age_group <- case_when(
-  data1$Age <= 18 ~ "<18",
-  data1$Age == 18 | data1$Age <= 24 ~ "18-24",
-  data1$Age == 25 | data1$Age <= 35 ~ "25-34",
-  data1$Age == 35 | data1$Age <= 44 ~ "35-44",
-  data1$Age == 45 | data1$Age <= 54 ~ "45-54",
-  data1$Age == 55 | data1$Age<= 64 ~ "55-64",
+  data1$Age < 18 ~ "<18",
+  data1$Age <= 24 ~ "18-24",
+  data1$Age <= 35 ~ "25-34",
+  data1$Age <= 44 ~ "35-44",
+  data1$Age <= 54 ~ "45-54",
+  data1$Age <= 64 ~ "55-64",
   data1$Age >= 65 ~ "65+")
 head(data1)
 
@@ -64,7 +64,7 @@ data1_filt <- data1 %>% filter(
 
 # plot CTR
 ctr_plot <- ggplot(data1_filt, aes(x = click_rate, fill = age_group))+
-  geom_histogram(binwidth =20,position = "dodge")+
+  geom_histogram(binwidth = 10, alpha = 0.8)+
   ggtitle("Distribution of Click-Through Rates") +
   xlab("Click-Through Rate (%)") +
   xlim(0, max(data1_filt$click_rate))+
@@ -75,7 +75,7 @@ print(ctr_plot)
 
 # plot for impressions
 im_plot <- ggplot(data1_filt, aes(x = Impressions, fill = age_group)) +
-  geom_histogram(binwidth =20, position = "dodge", alpha = 0.8)+
+  geom_histogram(binwidth = 1, alpha = 0.8)+
   ggtitle("Distribution of Impressions") +
   theme_bw() +
   theme(plot.title = element_text(hjust = 0.5))
