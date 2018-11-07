@@ -11,26 +11,26 @@ library(readxl)
 library(dplyr)
 library(ggplot2)
 library(lubridate)
+library(RColorBrewer)
 ```
-## Manhattan Rolling Sales File.  All Sales From August 2012 - August 2013. 		
+# Manhattan Rolling Sales File (August 2012 - August 2013)	
 * Sales File as of 08/30/2013  Coop Sales Files as of 09/18/2013		
 * Neighborhood Name 09/06/13, Descriptive Data is as of 06/01/13		
 * Building Class Category is based on Building Class at Time of Sale.		
 
 
-## Load & Clean Data
+# Load & Clean Data
 
 ```{r, message=F, warning=F}
 # load data
 manhattan <- read.csv("rollingsales_manhattan.csv")
-head(manhattan)
 
 ```
 
-
+## Cleaning & Formatting
 ```{r pressure, echo=FALSE}
 # clean data
-library(dplyr)
+# only keep unique values
 manhattan %>%
      group_by(LOT,ADDRESS, SALE.PRICE, SALE.DATE) %>%
      mutate(n = n()) %>% arrange(LOT,ADDRESS, SALE.PRICE, SALE.DATE, desc(n)) %>% 
@@ -44,37 +44,52 @@ manhattan$GROSS.SQUARE.FEET = as.numeric(gsub("[:,:]", "", manhattan$GROSS.SQUAR
 manhattan$LAND.SQUARE.FEET = as.numeric(gsub("[:,:]", "", manhattan$LAND.SQUARE.FEET))
 
 
-# fix date
+# change date to Date type
 manhattan$newdate <- as.Date(manhattan$SALE.DATE, format ="%d/%m/%Y")
+
+# change measurements to numeric type
+manhattan$GROSS.SQUARE.FEET <- as.numeric(as.character(manhattan$GROSS.SQUARE.FEET))
+manhattan$LAND.SQUARE.FEET <- manhattan$land.sqfeet <- as.numeric(as.character(manhattan$LAND.SQUARE.FEET))
 
 #TODO get rid of incidences where the sale price is $0 and land & gross square feet are equal to 0. 
 # $0 sales price indicate transfer of ownership without a cash consideration e.g. transfer ownership from parents to their children. 
 manhattan.sales <- manhattan[!(manhattan$SALE.PRICE.N == 0 |
-                        manhattan$LAND.SQUARE.FEET== 0 |
+                        manhattan$LAND.SQUARE.FEET == 0 |
                         manhattan$GROSS.SQUARE.FEET == 0),]
 
-as.numeric(as.character(manhattan.sales$GROSS.SQUARE.FEET))
-as.numeric(as.character(manhattan.sales$LAND.SQUARE.FEET))
+# remove columns because all borough values == 1, ease.ment column are all NAs and we have made a new column (SALE.PRICE.N) for sale price as integers.
+manhattan.sales <- manhattan.sales %>%
+  select(-BOROUGH, -EASE.MENT,-SALE.PRICE)
 
-# subset of data: remove columns because all borough values == 1, ease.ment column are all NAs and we have made a new column (SALE.PRICE.N) for sale price as integers.
-manhattan.sales <- manhattan.sales %>% select(-BOROUGH, -EASE.MENT,-SALE.PRICE)
+# Building classification codes, e.g. A0: CAPE COD, A1: TWO STORIES - DETACHED SM OR MID
+building_class <- unique(factor(manhattan.sales$BUILDING.CLASS.AT.TIME.OF.SALE))
+building_class <- sort(building_class)
 
-
-# All neighbourhoods and zip codes   
+# neighbourhoods and zip codes   
 hoods <- unique(factor(manhattan.sales$NEIGHBORHOOD))
 zip_codes <- unique(factor(manhattan.sales$ZIP.CODE))
+
 
 # table
 hood_zip <- manhattan.sales %>%
   select(NEIGHBORHOOD, ZIP.CODE) %>%
   distinct(NEIGHBORHOOD, ZIP.CODE)
 
-# Building classification codes, e.g. A0: CAPE COD, A1: TWO STORIES - DETACHED SM OR MID
-building_class <- unique(factor(manhattan.sales$BUILDING.CLASS.AT.TIME.OF.SALE))
-building_class <- sort(building_class)
+n_hoods <- c(1:nlevels(hoods))
+```
+
+## Exploratory Analyses
+```{r}
 
 # Let's look at the sales
-plot(manhattan.sales$LAND.SQUARE.FEET, manhattan.sales$SALE.PRICE.N)
+options(scipen=999)
+plot(x = (manhattan.sales$GROSS.SQUARE.FEET)/1000, y = (manhattan.sales$SALE.PRICE.N)/1000000,
+     xlab = "Gross Area (thousand sq. ft.)", ylab = "Sale Price ($ in millions)", main = "Gross Area of Properties in Manhattan in Relation to Sale Prices", las = 1)
+
+
+```
+
+```{r}
 ggplot(data = manhattan.sales, aes(log(manhattan.sales$GROSS.SQUARE.FEET), log(manhattan.sales$SALE.PRICE.N)))+
   labs(title = 'Relationship Between Sale Prices and Size of Properties in Manhattan (2012/13)',x = 'Log Gross Area (square feet)', y= 'Log Sale Price ($)')+
   geom_point(colour = 'forest green')
@@ -86,47 +101,67 @@ sales_table <- manhattan.sales %>%
   summarise(
     `mean price` = mean(SALE.PRICE.N, na.rm = TRUE),
     `sd price` = sd(SALE.PRICE.N, na.rm = TRUE)
-    )
+    ) %>%
+  arrange(desc(`mean price`))
 
-ggplot(data = manhattan.sales, aes(manhattan.sales$NEIGHBORHOOD, log(manhattan.sales$SALE.PRICE.N)))+
+ggplot(data = manhattan.sales, aes(manhattan.sales$NEIGHBORHOOD, log(manhattan.sales$SALE.PRICE.N), color = NEIGHBORHOOD))+
   labs(title = 'Relationship Between Sale Prices and Neighborhoods of Properties in Manhattan (2012/13)',x = 'Manhattan Neighborhoods', y= 'Log Sale Price ($)')+
+  theme_light()+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position="none")+
   geom_bar(stat="identity")
 
+```
+
+```{r}
 # Sales over time 
 ggplot(data = manhattan.sales, aes(x = newdate, y= log(SALE.PRICE.N))) +
-  geom_point()+
-  geom_line()
+  geom_point(alpha = 0.5)+
+  geom_line(alpha = 0.3)+
+  xlab('Date')+ ylab('Log Sale Prices ($)')+
+  ggtitle('Sale Prices Across Time Period 2012-13')+
+  theme_light()+
+  theme(plot.title = element_text(size = 14, face = "bold", color = "black", hjust = 0.5))
 
 # value 1.96 for estimating 97.5 percentile
 z_star <- qnorm(0.975)
 
 # Monthly trends
-# mean for each month
-
 month_summary <- manhattan.sales %>%
   group_by(month = floor_date(newdate, "month")) %>%
-  summarize(n = n,
+  summarize(n = n(),
             mean = mean(SALE.PRICE.N),
             sd = sd(SALE.PRICE.N),
             lower = mean(SALE.PRICE.N) - z_star * (sd / sqrt(n)),
             upper = mean(SALE.PRICE.N) + z_star * (sd / sqrt(n)))
-# Plot 
-plot(month_summary)
+
 
 ggplot(manhattan.sales, aes(x=newdate, y=log(SALE.PRICE.N))) + 
-  geom_point(alpha = 0.4, colour ='darkblue') +
+  geom_point(alpha = 0.4, colour ="darkblue") +
   geom_line(data = month_summary, aes(x = month, y = log(mean), colour = "red"), size =1)+
   geom_errorbar(data = month_summary, aes(x = month, y = log(sd),ymin= log(upper), ymax= log(lower), colour = "red"), size = 0.5)+
   scale_colour_manual(labels = c("month means","error bars"),
                       values = c("red", "red"))+
-  labs(x = "Date", y = 'log Sale Prices', colour = " ", title = "Time Series of Log Sale Prices")+
+  labs(x = "Date", y = 'log Sale Prices', colour = " ", title = "Monthly Trends: Time Series of Log Sale Prices")+
   theme_bw()+
   theme(plot.title = element_text(size = 14, face = "bold", color = "black", hjust = 0.5))
 
 #TODO weekly trends
+week_summary <- manhattan.sales %>%
+  group_by(week = floor_date(newdate, "week")) %>%
+  summarize(n = n(),
+            mean = mean(SALE.PRICE.N),
+            sd = sd(SALE.PRICE.N),
+            lower = mean(SALE.PRICE.N) - z_star * (sd / sqrt(n)),
+            upper = mean(SALE.PRICE.N) + z_star * (sd / sqrt(n)))
 
-#TODO quartley trends
-
+ggplot(manhattan.sales, aes(x=newdate, y=log(SALE.PRICE.N))) + 
+  geom_point(alpha = 0.4, colour ='darkblue') +
+  geom_line(data = week_summary, aes(x = week, y = log(mean), colour = "red"), size =1)+
+  geom_errorbar(data = week_summary, aes(x = week, y = log(sd),ymin= log(upper), ymax= log(lower), colour = "red"), size = 0.5)+
+  scale_colour_manual(values = c("red", "red"), labels = c("week means","error bars"))+
+  labs(x = "Date", y = 'log Sale Prices', colour = " ", title = "Weekly Trends: Time Series of Log Sale Prices")+
+  theme_bw()+
+  theme(plot.title = element_text(size = 14, face = "bold", color = "black", hjust = 0.5))
 
 ```
 ##
